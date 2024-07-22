@@ -12,6 +12,8 @@
             height: 100%;
             overflow: hidden;
             font-family: Arial, sans-serif;
+            background-color: #212121;
+            color: white;
         }
 
         #desktop {
@@ -90,9 +92,10 @@
             border: 1px solid #ccc;
             z-index: 5;
             padding: 10px;
+            color: black;
         }
 
-        #control-panel, #browser, #timer, #clock {
+        #control-panel, #browser, #timer, #clock, #paint, #explorer, #minesweeper, #antivirus, #badsoft {
             display: none;
         }
 
@@ -136,6 +139,49 @@
             font-size: 24px;
             z-index: 30;
         }
+
+        #sidebar {
+            position: absolute;
+            top: 40px;
+            right: 0;
+            width: 200px;
+            background: rgba(255, 255, 255, 0.9);
+            border-left: 1px solid #ccc;
+            height: calc(100% - 40px);
+            display: none;
+            z-index: 10;
+            padding: 10px;
+            box-shadow: -2px 0 5px rgba(0, 0, 0, 0.5);
+        }
+
+        #sidebar ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #sidebar ul li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #sidebar ul li:hover {
+            background: #eee;
+        }
+
+        #bluescreen {
+            display: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('ブルスク.png') no-repeat center center;
+            background-size: cover;
+            z-index: 100;
+        }
+
+        #paint-canvas {
+            border: 1px solid #ccc;
+        }
     </style>
 </head>
 <body>
@@ -173,6 +219,11 @@
                 <li onclick="openBrowser()">ブラウザ</li>
                 <li onclick="openTimer()">タイマー</li>
                 <li onclick="openClock()">時計</li>
+                <li onclick="openPaint()">ペイント</li>
+                <li onclick="openExplorer()">エクスプローラー</li>
+                <li onclick="openMinesweeper()">マインスイーパー</li>
+                <li onclick="openAntivirus()">ウイルス対策</li>
+                <li onclick="openBadsoft()">badsoft</li>
                 <li onclick="lockScreen()">ロック画面</li>
             </ul>
         </div>
@@ -199,6 +250,46 @@
             <p id="clock-display">00:00:00</p>
             <button class="btn-blue" onclick="closeClock()">閉じる</button>
         </div>
+        <div id="paint" class="window">
+            <h2>ペイント</h2>
+            <canvas id="paint-canvas" width="280" height="150"></canvas>
+            <br>
+            <button class="btn-blue" onclick="clearCanvas()">クリア</button>
+            <button class="btn-blue" onclick="saveDrawing()">保存</button>
+            <button class="btn-blue" onclick="closePaint()">閉じる</button>
+        </div>
+        <div id="explorer" class="window">
+            <h2>エクスプローラー</h2>
+            <div id="explorer-content">
+                <!-- Peinture dessinée sera affichée ici -->
+            </div>
+            <button class="btn-blue" onclick="closeExplorer()">閉じる</button>
+        </div>
+        <div id="minesweeper" class="window">
+            <h2>マインスイーパー</h2>
+            <p>ゲームがここに表示されます。</p>
+            <button class="btn-blue" onclick="closeMinesweeper()">閉じる</button>
+        </div>
+        <div id="antivirus" class="window">
+            <h2>ウイルス対策ソフト</h2>
+            <p>ウイルススキャンがここに表示されます。</p>
+            <button class="btn-blue" onclick="closeAntivirus()">閉じる</button>
+        </div>
+        <div id="badsoft" class="window">
+            <h2>BadSoft</h2>
+            <p>ブルースクリーンのエラーがここに表示されます。</p>
+            <button class="btn-blue" onclick="closeBadsoft()">閉じる</button>
+        </div>
+        <div id="sidebar">
+            <ul>
+                <li onclick="openPaint()">ペイント</li>
+                <li onclick="openExplorer()">エクスプローラー</li>
+                <li onclick="openMinesweeper()">マインスイーパー</li>
+                <li onclick="openAntivirus()">ウイルス対策</li>
+                <li onclick="openBadsoft()">BadSoft</li>
+            </ul>
+        </div>
+        <div id="bluescreen"></div>
         <div id="lock-screen">
             <p>画面がロックされています</p>
             <button class="btn-blue" onclick="unlockScreen()">ロック解除</button>
@@ -208,6 +299,10 @@
         let currentStep = 1;
         let currentLanguage = 'ja';
         let timerInterval;
+        let clockInterval;
+        let paintContext;
+        let currentImage;
+        let explorerImage;
 
         function nextInstallationStep(step) {
             document.getElementById(`installation-step-${step}`).style.display = 'none';
@@ -295,7 +390,89 @@
             const minutes = String(now.getMinutes()).padStart(2, '0');
             const seconds = String(now.getSeconds()).padStart(2, '0');
             document.getElementById('clock-display').textContent = `${hours}:${minutes}:${seconds}`;
-            setTimeout(updateClock, 1000);
+            clockInterval = setTimeout(updateClock, 1000);
+        }
+
+        function openPaint() {
+            document.getElementById('paint').style.display = 'block';
+            paintContext = document.getElementById('paint-canvas').getContext('2d');
+            paintContext.strokeStyle = 'black';
+            paintContext.lineWidth = 2;
+            paintContext.lineCap = 'round';
+            paintContext.lineJoin = 'round';
+
+            document.getElementById('paint-canvas').addEventListener('mousedown', (e) => {
+                paintContext.beginPath();
+                paintContext.moveTo(e.offsetX, e.offsetY);
+                document.getElementById('paint-canvas').addEventListener('mousemove', onPaintMove);
+            });
+
+            document.addEventListener('mouseup', () => {
+                document.getElementById('paint-canvas').removeEventListener('mousemove', onPaintMove);
+            });
+        }
+
+        function onPaintMove(e) {
+            paintContext.lineTo(e.offsetX, e.offsetY);
+            paintContext.stroke();
+        }
+
+        function clearCanvas() {
+            paintContext.clearRect(0, 0, document.getElementById('paint-canvas').width, document.getElementById('paint-canvas').height);
+        }
+
+        function saveDrawing() {
+            const canvas = document.getElementById('paint-canvas');
+            const dataURL = canvas.toDataURL();
+            // Here you can add functionality to save or display the drawing elsewhere
+            alert('画像が保存されました');
+        }
+
+        function closePaint() {
+            document.getElementById('paint').style.display = 'none';
+        }
+
+        function openExplorer() {
+            document.getElementById('explorer').style.display = 'block';
+            const explorerContent = document.getElementById('explorer-content');
+            explorerContent.innerHTML = '';
+            if (currentImage) {
+                const img = document.createElement('img');
+                img.src = currentImage;
+                img.style.width = '100%';
+                img.style.height = 'auto';
+                explorerContent.appendChild(img);
+            }
+        }
+
+        function closeExplorer() {
+            document.getElementById('explorer').style.display = 'none';
+        }
+
+        function openMinesweeper() {
+            document.getElementById('minesweeper').style.display = 'block';
+        }
+
+        function closeMinesweeper() {
+            document.getElementById('minesweeper').style.display = 'none';
+        }
+
+        function openAntivirus() {
+            document.getElementById('antivirus').style.display = 'block';
+        }
+
+        function closeAntivirus() {
+            document.getElementById('antivirus').style.display = 'none';
+        }
+
+        function openBadsoft() {
+            document.getElementById('badsoft').style.display = 'block';
+            document.getElementById('bluescreen').style.display = 'block';
+        }
+
+        function closeBadsoft() {
+            document.getElementById('badsoft').style.display = 'none';
+            document.getElementById('bluescreen').style.display = 'none';
         }
 
         function lockScreen() {
@@ -307,43 +484,11 @@
         }
 
         function switchLanguage() {
-            const elements = {
-                'ja': {
-                    'start-menu-button': 'スタート',
-                    'installation-step-1': 'ようこそ、Windows BlueFire のインストールへ',
-                    'installation-step-2': 'Windows BlueFire をインストールしています...',
-                    'installation-step-3': 'もうすぐ完了します...',
-                    'installation-step-4': 'インストール完了！',
-                    'control-panel': 'コントロールパネル',
-                    'lock-screen': '画面がロックされています',
-                    'windows-container': 'テキストエディタ'
-                },
-                'en': {
-                    'start-menu-button': 'Start',
-                    'installation-step-1': 'Welcome to Windows BlueFire Installation',
-                    'installation-step-2': 'Installing Windows BlueFire...',
-                    'installation-step-3': 'Almost done...',
-                    'installation-step-4': 'Installation Complete!',
-                    'control-panel': 'Control Panel',
-                    'lock-screen': 'Screen Locked',
-                    'windows-container': 'Text Editor'
-                }
-            };
-
             currentLanguage = currentLanguage === 'ja' ? 'en' : 'ja';
-            document.getElementById('start-menu-button').textContent = elements[currentLanguage]['start-menu-button'];
-            document.getElementById('installation-step-1').firstChild.textContent = elements[currentLanguage]['installation-step-1'];
-            document.getElementById('installation-step-2').firstChild.textContent = elements[currentLanguage]['installation-step-2'];
-            document.getElementById('installation-step-3').firstChild.textContent = elements[currentLanguage]['installation-step-3'];
-            document.getElementById('installation-step-4').firstChild.textContent = elements[currentLanguage]['installation-step-4'];
-            document.getElementById('control-panel').firstChild.textContent = elements[currentLanguage]['control-panel'];
-            document.getElementById('lock-screen').firstChild.textContent = elements[currentLanguage]['lock-screen'];
-            document.querySelector('.window').firstChild.textContent = elements[currentLanguage]['windows-container'];
-            document.getElementById('language-switch').textContent = currentLanguage === 'ja' ? 'EN' : 'JA';
+            const languageSwitch = document.getElementById('language-switch');
+            languageSwitch.textContent = currentLanguage === 'ja' ? 'EN' : 'JA';
+            // 追加のローカライズが必要な場合はここで行います
         }
-
-        // Start clock update
-        updateClock();
     </script>
 </body>
 </html>
