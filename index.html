@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Windows BlueFire</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+
+        #desktop {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            background: url('wallpaper.jpg') no-repeat center center fixed;
+            background-size: cover;
+        }
+
+        #taskbar {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 60%;
+            height: 40px;
+            background: rgba(255, 255, 255, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0 10px;
+            border-radius: 5px;
+        }
+
+        #start-menu-button {
+            color: white;
+            cursor: pointer;
+            background-color: blue;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        #language-switch {
+            color: white;
+            cursor: pointer;
+            background-color: blue;
+            padding: 5px 10px;
+            border-radius: 3px;
+        }
+
+        #start-menu {
+            position: absolute;
+            top: 40px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(255, 255, 255, 0.9);
+            border: 1px solid #ccc;
+            width: 300px;
+            display: none;
+            z-index: 10;
+            border-radius: 5px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+        }
+
+        #start-menu ul {
+            list-style: none;
+            margin: 0;
+            padding: 0;
+        }
+
+        #start-menu ul li {
+            padding: 10px;
+            cursor: pointer;
+        }
+
+        #start-menu ul li:hover {
+            background: #eee;
+        }
+
+        .window {
+            position: absolute;
+            width: 300px;
+            height: 200px;
+            background: white;
+            border: 1px solid #ccc;
+            z-index: 5;
+            padding: 10px;
+        }
+
+        #control-panel, #browser, #timer, #clock {
+            display: none;
+        }
+
+        #lock-screen {
+            display: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            z-index: 20;
+        }
+
+        .btn-blue {
+            background-color: blue;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            cursor: pointer;
+            border-radius: 3px;
+        }
+
+        .btn-blue:hover {
+            background-color: darkblue;
+        }
+
+        #installation {
+            display: none;
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: white;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: 24px;
+            z-index: 30;
+        }
+    </style>
+</head>
+<body>
+    <div id="installation">
+        <div id="installation-step-1">
+            ようこそ、Windows BlueFire のインストールへ
+            <br><br>
+            <button class="btn-blue" onclick="nextInstallationStep(1)">次へ</button>
+        </div>
+        <div id="installation-step-2" style="display:none;">
+            Windows BlueFire をインストールしています...
+            <br><br>
+            <button class="btn-blue" onclick="nextInstallationStep(2)">次へ</button>
+        </div>
+        <div id="installation-step-3" style="display:none;">
+            もうすぐ完了します...
+            <br><br>
+            <button class="btn-blue" onclick="nextInstallationStep(3)">次へ</button>
+        </div>
+        <div id="installation-step-4" style="display:none;">
+            インストール完了！
+            <br><br>
+            <button class="btn-blue" onclick="finishInstallation()">完了</button>
+        </div>
+    </div>
+    <div id="desktop">
+        <div id="taskbar">
+            <div id="start-menu-button">スタート</div>
+            <div id="language-switch" onclick="switchLanguage()">EN</div>
+        </div>
+        <div id="start-menu">
+            <ul>
+                <li onclick="openApp('textEditor')">テキストエディタ</li>
+                <li onclick="openControlPanel()">コントロールパネル</li>
+                <li onclick="openBrowser()">ブラウザ</li>
+                <li onclick="openTimer()">タイマー</li>
+                <li onclick="openClock()">時計</li>
+                <li onclick="lockScreen()">ロック画面</li>
+            </ul>
+        </div>
+        <div id="windows-container"></div>
+        <div id="control-panel" class="window">
+            <h2>コントロールパネル</h2>
+            <p>設定と構成</p>
+            <button class="btn-blue" onclick="closeControlPanel()">閉じる</button>
+        </div>
+        <div id="browser" class="window">
+            <h2>ブラウザ</h2>
+            <iframe src="https://www.example.com" style="width:100%;height:80%;border:none;"></iframe>
+            <button class="btn-blue" onclick="closeBrowser()">閉じる</button>
+        </div>
+        <div id="timer" class="window">
+            <h2>タイマー</h2>
+            <input type="number" id="timer-minutes" placeholder="分" style="width:50px;">
+            <button class="btn-blue" onclick="startTimer()">開始</button>
+            <p id="timer-display">00:00</p>
+            <button class="btn-blue" onclick="closeTimer()">閉じる</button>
+        </div>
+        <div id="clock" class="window">
+            <h2>時計</h2>
+            <p id="clock-display">00:00:00</p>
+            <button class="btn-blue" onclick="closeClock()">閉じる</button>
+        </div>
+        <div id="lock-screen">
+            <p>画面がロックされています</p>
+            <button class="btn-blue" onclick="unlockScreen()">ロック解除</button>
+        </div>
+    </div>
+    <script>
+        let currentStep = 1;
+        let currentLanguage = 'ja';
+        let timerInterval;
+
+        function nextInstallationStep(step) {
+            document.getElementById(`installation-step-${step}`).style.display = 'none';
+            document.getElementById(`installation-step-${step + 1}`).style.display = 'block';
+            currentStep++;
+        }
+
+        function finishInstallation() {
+            document.getElementById('installation').style.display = 'none';
+            document.getElementById('desktop').style.display = 'block';
+        }
+
+        document.getElementById('start-menu-button').onclick = function() {
+            const menu = document.getElementById('start-menu');
+            menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
+        };
+
+        function openApp(appName) {
+            const app = document.createElement('div');
+            app.className = 'window';
+            app.innerHTML = `<h2>${appName}</h2><button class="btn-blue" onclick="closeApp(this)">閉じる</button>`;
+            document.getElementById('windows-container').appendChild(app);
+        }
+
+        function closeApp(button) {
+            const window = button.parentNode;
+            document.getElementById('windows-container').removeChild(window);
+        }
+
+        function openControlPanel() {
+            document.getElementById('control-panel').style.display = 'block';
+        }
+
+        function closeControlPanel() {
+            document.getElementById('control-panel').style.display = 'none';
+        }
+
+        function openBrowser() {
+            document.getElementById('browser').style.display = 'block';
+        }
+
+        function closeBrowser() {
+            document.getElementById('browser').style.display = 'none';
+        }
+
+        function openTimer() {
+            document.getElementById('timer').style.display = 'block';
+        }
+
+        function closeTimer() {
+            document.getElementById('timer').style.display = 'none';
+            clearInterval(timerInterval);
+            document.getElementById('timer-display').textContent = '00:00';
+        }
+
+        function startTimer() {
+            let minutes = document.getElementById('timer-minutes').value;
+            let time = minutes * 60;
+            timerInterval = setInterval(() => {
+                if (time <= 0) {
+                    clearInterval(timerInterval);
+                    alert('タイマーが終了しました');
+                    return;
+                }
+                time--;
+                let min = Math.floor(time / 60);
+                let sec = time % 60;
+                document.getElementById('timer-display').textContent = `${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+            }, 1000);
+        }
+
+        function openClock() {
+            document.getElementById('clock').style.display = 'block';
+            updateClock();
+        }
+
+        function closeClock() {
+            document.getElementById('clock').style.display = 'none';
+            clearInterval(clockInterval);
+        }
+
+        function updateClock() {
+            const now = new Date();
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            document.getElementById('clock-display').textContent = `${hours}:${minutes}:${seconds}`;
+            setTimeout(updateClock, 1000);
+        }
+
+        function lockScreen() {
+            document.getElementById('lock-screen').style.display = 'flex';
+        }
+
+        function unlockScreen() {
+            document.getElementById('lock-screen').style.display = 'none';
+        }
+
+        function switchLanguage() {
+            const elements = {
+                'ja': {
+                    'start-menu-button': 'スタート',
+                    'installation-step-1': 'ようこそ、Windows BlueFire のインストールへ',
+                    'installation-step-2': 'Windows BlueFire をインストールしています...',
+                    'installation-step-3': 'もうすぐ完了します...',
+                    'installation-step-4': 'インストール完了！',
+                    'control-panel': 'コントロールパネル',
+                    'lock-screen': '画面がロックされています',
+                    'windows-container': 'テキストエディタ'
+                },
+                'en': {
+                    'start-menu-button': 'Start',
+                    'installation-step-1': 'Welcome to Windows BlueFire Installation',
+                    'installation-step-2': 'Installing Windows BlueFire...',
+                    'installation-step-3': 'Almost done...',
+                    'installation-step-4': 'Installation Complete!',
+                    'control-panel': 'Control Panel',
+                    'lock-screen': 'Screen Locked',
+                    'windows-container': 'Text Editor'
+                }
+            };
+
+            currentLanguage = currentLanguage === 'ja' ? 'en' : 'ja';
+            document.getElementById('start-menu-button').textContent = elements[currentLanguage]['start-menu-button'];
+            document.getElementById('installation-step-1').firstChild.textContent = elements[currentLanguage]['installation-step-1'];
+            document.getElementById('installation-step-2').firstChild.textContent = elements[currentLanguage]['installation-step-2'];
+            document.getElementById('installation-step-3').firstChild.textContent = elements[currentLanguage]['installation-step-3'];
+            document.getElementById('installation-step-4').firstChild.textContent = elements[currentLanguage]['installation-step-4'];
+            document.getElementById('control-panel').firstChild.textContent = elements[currentLanguage]['control-panel'];
+            document.getElementById('lock-screen').firstChild.textContent = elements[currentLanguage]['lock-screen'];
+            document.querySelector('.window').firstChild.textContent = elements[currentLanguage]['windows-container'];
+            document.getElementById('language-switch').textContent = currentLanguage === 'ja' ? 'EN' : 'JA';
+        }
+
+        // Start clock update
+        updateClock();
+    </script>
+</body>
+</html>
